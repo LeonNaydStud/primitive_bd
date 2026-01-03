@@ -2,15 +2,18 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from prettytable import PrettyTable
 
+from src.decorators import cacher, confirm_action, handle_db_errors, log_time
+
 from .utils import load_table_data, save_table_data
 
 SUPPORTED_TYPES = {"int", "str", "bool"}
 
 
+@handle_db_errors
 def create_table(
-    metadata: Dict[str, Any],
-    table_name: str,
-    columns: List[str]
+        metadata: Dict[str, Any],
+        table_name: str,
+        columns: List[str]
 ) -> Tuple[bool, str, Dict[str, Any]]:
     if table_name in metadata:
         return False, f'Таблица "{table_name}" уже существует.', metadata
@@ -46,9 +49,11 @@ def create_table(
     return True, success_msg, metadata
 
 
+@handle_db_errors
+@confirm_action("удаление таблицы")
 def drop_table(
-    metadata: Dict[str, Any],
-    table_name: str
+        metadata: Dict[str, Any],
+        table_name: str
 ) -> Tuple[bool, str, Dict[str, Any]]:
     if table_name not in metadata:
         return False, f'Таблица "{table_name}" не существует.', metadata
@@ -61,6 +66,7 @@ def drop_table(
     return True, f'Таблица "{table_name}" успешно удалена.', metadata
 
 
+@handle_db_errors
 def list_tables(metadata: Dict[str, Any]) -> str:
     if not metadata:
         return "В базе данных нет таблиц."
@@ -108,10 +114,12 @@ def validate_data_types(values: List[Any], column_types: Dict[str, str]) -> bool
     return True
 
 
+@handle_db_errors
+@log_time
 def insert(
-    metadata: Dict[str, Any],
-    table_name: str,
-    values: List[Any]
+        metadata: Dict[str, Any],
+        table_name: str,
+        values: List[Any]
 ) -> Tuple[bool, str]:
     if table_name not in metadata:
         return False, f'Таблица "{table_name}" не существует.'
@@ -147,41 +155,48 @@ def insert(
     return True, f'Запись с ID={new_id} успешно добавлена в таблицу "{table_name}".'
 
 
+@handle_db_errors
+@log_time
 def select(
-    metadata: Dict[str, Any],
-    table_name: str,
-    where_clause: Optional[Dict[str, Any]] = None
+        metadata: Dict[str, Any],
+        table_name: str,
+        where_clause: Optional[Dict[str, Any]] = None
 ) -> Tuple[bool, str, List[Dict[str, Any]]]:
-    if table_name not in metadata:
-        return False, f'Таблица "{table_name}" не существует.', []
+    cache_key = f"select_{table_name}_{str(where_clause)}"
 
-    table_data = load_table_data(table_name)
+    def execute_select():
+        if table_name not in metadata:
+            return False, f'Таблица "{table_name}" не существует.', []
 
-    if not table_data:
-        return True, f'Таблица "{table_name}" пуста.', []
+        table_data = load_table_data(table_name)
 
-    if where_clause:
-        filtered_data = []
-        for record in table_data:
-            match = True
-            for column, value in where_clause.items():
-                if record.get(column) != value:
-                    match = False
-                    break
-            if match:
-                filtered_data.append(record)
+        if not table_data:
+            return True, f'Таблица "{table_name}" пуста.', []
 
-        if not filtered_data:
-            return True, "Записи не найдены.", []
+        if where_clause:
+            filtered_data = []
+            for record in table_data:
+                match = True
+                for column, value in where_clause.items():
+                    if record.get(column) != value:
+                        match = False
+                        break
+                if match:
+                    filtered_data.append(record)
 
-        return True, "", filtered_data
+            if not filtered_data:
+                return True, "Записи не найдены.", []
 
-    return True, "", table_data
+            return True, "", filtered_data
+
+        return True, "", table_data
+
+    return cacher(cache_key, execute_select)
 
 
 def format_table_output(
-    data: List[Dict[str, Any]],
-    columns: List[Dict[str, str]]
+        data: List[Dict[str, Any]],
+        columns: List[Dict[str, str]]
 ) -> str:
     if not data:
         return "Нет данных для отображения."
@@ -206,11 +221,12 @@ def format_table_output(
     return str(table)
 
 
+@handle_db_errors
 def update(
-    metadata: Dict[str, Any],
-    table_name: str,
-    set_clause: Dict[str, Any],
-    where_clause: Dict[str, Any]
+        metadata: Dict[str, Any],
+        table_name: str,
+        set_clause: Dict[str, Any],
+        where_clause: Dict[str, Any]
 ) -> Tuple[bool, str]:
     if table_name not in metadata:
         return False, f'Таблица "{table_name}" не существует.'
@@ -250,10 +266,12 @@ def update(
     return True, f'Записи с ID={ids_str} в таблице "{table_name}" успешно обновлены.'
 
 
+@handle_db_errors
+@confirm_action("удаление записей")
 def delete(
-    metadata: Dict[str, Any],
-    table_name: str,
-    where_clause: Dict[str, Any]
+        metadata: Dict[str, Any],
+        table_name: str,
+        where_clause: Dict[str, Any]
 ) -> Tuple[bool, str]:
     if table_name not in metadata:
         return False, f'Таблица "{table_name}" не существует.'
@@ -287,9 +305,10 @@ def delete(
     return True, f'Записи с ID={ids_str} успешно удалены из таблицы "{table_name}".'
 
 
+@handle_db_errors
 def table_info(
-    metadata: Dict[str, Any],
-    table_name: str
+        metadata: Dict[str, Any],
+        table_name: str
 ) -> Tuple[bool, str]:
     if table_name not in metadata:
         return False, f'Таблица "{table_name}" не существует.'

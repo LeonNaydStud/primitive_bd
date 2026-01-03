@@ -1,8 +1,9 @@
-"""Движок базы данных - обработка команд и основной цикл."""
 import shlex
 from typing import List
 
 import prompt
+
+from src.decorators import handle_db_errors
 
 from .core import (
     create_table,
@@ -91,6 +92,7 @@ def parse_complex_command(full_command: str) -> tuple[str, List[str]]:
         return parts[0], parts[1:]
 
 
+@handle_db_errors
 def handle_insert(args: List[str]) -> str:
     if len(args) < 2:
         return "Ошибка: Неверный формат команды."
@@ -101,7 +103,7 @@ def handle_insert(args: List[str]) -> str:
     if not values_part.lower().startswith("values"):
         return "Ошибка: Отсутствует ключевое слово VALUES."
 
-    values_str = values_part[6:].strip()  # удаляем "values"
+    values_str = values_part[6:].strip()
 
     try:
         values = parse_insert_values(values_str)
@@ -111,9 +113,10 @@ def handle_insert(args: List[str]) -> str:
     metadata = load_metadata()
     success, message = insert(metadata, table_name, values)
 
-    return message
+    return message if message else "Операция выполнена успешно."
 
 
+@handle_db_errors
 def handle_select(args: List[str]) -> str:
     if len(args) < 1:
         return "Ошибка: Неверный формат команды."
@@ -135,7 +138,7 @@ def handle_select(args: List[str]) -> str:
     success, message, data = select(metadata, table_name, where_clause)
 
     if not success:
-        return message
+        return message if message else "Ошибка выполнения запроса."
 
     if not data:
         return "Нет данных для отображения."
@@ -144,6 +147,7 @@ def handle_select(args: List[str]) -> str:
     return format_table_output(data, columns)
 
 
+@handle_db_errors
 def handle_update(args: List[str]) -> str:
     if len(args) < 4:
         return "Ошибка: Неверный формат команды."
@@ -181,9 +185,10 @@ def handle_update(args: List[str]) -> str:
     metadata = load_metadata()
     success, message = update(metadata, table_name, set_clause, where_clause)
 
-    return message
+    return message if message else "Операция выполнена успешно."
 
 
+@handle_db_errors
 def handle_delete(args: List[str]) -> str:
     if len(args) < 3:
         return "Ошибка: Неверный формат команды."
@@ -205,9 +210,10 @@ def handle_delete(args: List[str]) -> str:
     metadata = load_metadata()
     success, message = delete(metadata, table_name, where_clause)
 
-    return message
+    return message if message else "Операция выполнена успешно."
 
 
+@handle_db_errors
 def handle_info(args: List[str]) -> str:
     if len(args) != 1:
         return "Ошибка: Используйте: info <имя_таблицы>"
@@ -216,9 +222,10 @@ def handle_info(args: List[str]) -> str:
     metadata = load_metadata()
     success, message = table_info(metadata, table_name)
 
-    return message
+    return message if message else "Информация не найдена."
 
 
+@handle_db_errors
 def handle_create_table(args: List[str]) -> str:
     if len(args) < 2:
         return "Ошибка: Недостаточно аргументов."
@@ -236,9 +243,10 @@ def handle_create_table(args: List[str]) -> str:
     if success:
         save_metadata(new_metadata)
 
-    return message
+    return message if message else "Таблица создана успешно."
 
 
+@handle_db_errors
 def handle_drop_table(args: List[str]) -> str:
     if len(args) != 1:
         return "Ошибка: Неверное количество аргументов."
@@ -250,9 +258,10 @@ def handle_drop_table(args: List[str]) -> str:
     if success:
         save_metadata(new_metadata)
 
-    return message
+    return message if message else "Таблица удалена успешно."
 
 
+@handle_db_errors
 def run() -> None:
     print_welcome()
 
@@ -278,12 +287,14 @@ def run() -> None:
                 print_help()
 
             elif command == "create_table":
-                result = handle_create_table(args)
-                print(result)
+                result = handle_insert(args)
+                if result:
+                    print(result)
 
             elif command == "drop_table":
                 result = handle_drop_table(args)
-                print(result)
+                if result:
+                    print(result)
 
             elif command == "list_tables":
                 metadata = load_metadata()
@@ -292,23 +303,28 @@ def run() -> None:
 
             elif command == "insert":
                 result = handle_insert(args)
-                print(result)
+                if result:
+                    print(result)
 
             elif command == "select":
                 result = handle_select(args)
-                print(result)
+                if result:
+                    print(result)
 
             elif command == "update":
                 result = handle_update(args)
-                print(result)
+                if result:
+                    print(result)
 
             elif command == "delete":
                 result = handle_delete(args)
-                print(result)
+                if result:
+                    print(result)
 
             elif command == "info":
                 result = handle_info(args)
-                print(result)
+                if result:
+                    print(result)
 
             else:
                 print(f"Функции '{command}' нет. Попробуйте снова.")
@@ -319,5 +335,3 @@ def run() -> None:
         except EOFError:
             print("\nВыход из программы...")
             break
-        except Exception as e:
-            print(f"Неожиданная ошибка: {e}")

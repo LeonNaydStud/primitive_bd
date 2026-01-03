@@ -1,7 +1,10 @@
 import shlex
 from typing import Any, Dict, Optional
 
+from src.decorators import handle_db_errors
 
+
+@handle_db_errors
 def parse_where_condition(where_str: str) -> Optional[Dict[str, Any]]:
     if not where_str:
         return None
@@ -21,6 +24,7 @@ def parse_where_condition(where_str: str) -> Optional[Dict[str, Any]]:
         raise ValueError(f"Ошибка парсинга условия WHERE: {e}")
 
 
+@handle_db_errors
 def parse_set_clause(set_str: str) -> Dict[str, Any]:
     try:
         parts = shlex.split(set_str)
@@ -37,6 +41,7 @@ def parse_set_clause(set_str: str) -> Dict[str, Any]:
         raise ValueError(f"Ошибка парсинга SET: {e}")
 
 
+@handle_db_errors
 def parse_value(value_str: str) -> Any:
     value_str = value_str.strip()
 
@@ -57,6 +62,7 @@ def parse_value(value_str: str) -> Any:
     return value_str
 
 
+@handle_db_errors
 def parse_insert_values(values_str: str) -> list:
     try:
         values_str = values_str.strip()
