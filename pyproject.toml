@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "project2-naydanov-leonid"
+version = "0.1.0"
+description = ""
+authors = ["Leonid Naydanov <najdanov.2020@stud.nstu.ru>"]
+readme = "README.md"
+
+packages = [
+    { include = "src", from = "." }
+]
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+[tool.poetry.scripts]
+project = "src.primitive_db.main:main"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
