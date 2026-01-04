@@ -1,9 +1,10 @@
 [tool.poetry]
 name = "project2-naydanov-leonid"
 version = "0.1.0"
-description = ""
+description = "Примитивная база данных"
 authors = ["Leonid Naydanov <najdanov.2020@stud.nstu.ru>"]
 readme = "README.md"
+license = "MIT"
 
 packages = [
     { include = "src", from = "." }

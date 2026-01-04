@@ -1,3 +1,4 @@
+"""Движок базы данных - обработка команд и основной цикл."""
 import shlex
 from typing import List
 
@@ -22,6 +23,7 @@ from .utils import load_metadata, save_metadata
 
 
 def print_help() -> None:
+    """Выводит справочную информацию."""
     print("\n***Операции с данными***")
     print("\nФункции:")
     print("<command> insert into <имя_таблицы> values (<значение1>, ...)")
@@ -46,12 +48,22 @@ def print_help() -> None:
 
 
 def print_welcome() -> None:
+    """Выводит приветственное сообщение."""
     print("Первая попытка запустить проект!")
     print("***")
     print_help()
 
 
 def parse_command(user_input: str) -> tuple[str, List[str]]:
+    """
+    Парсит введенную команду.
+
+    Args:
+        user_input: Строка ввода пользователя
+
+    Returns:
+        Tuple: (команда, аргументы)
+    """
     try:
         parts = shlex.split(user_input)
         if not parts:
@@ -64,6 +76,15 @@ def parse_command(user_input: str) -> tuple[str, List[str]]:
 
 
 def parse_complex_command(full_command: str) -> tuple[str, List[str]]:
+    """
+    Парсит сложные команды с несколькими частями.
+
+    Args:
+        full_command: Полная команда пользователя
+
+    Returns:
+        Tuple: (базовая_команда, аргументы)
+    """
     parts = full_command.lower().split()
     if not parts:
         return "", []
@@ -94,6 +115,7 @@ def parse_complex_command(full_command: str) -> tuple[str, List[str]]:
 
 @handle_db_errors
 def handle_insert(args: List[str]) -> str:
+    """Обрабатывает команду insert into."""
     if len(args) < 2:
         return "Ошибка: Неверный формат команды."
 
@@ -103,7 +125,7 @@ def handle_insert(args: List[str]) -> str:
     if not values_part.lower().startswith("values"):
         return "Ошибка: Отсутствует ключевое слово VALUES."
 
-    values_str = values_part[6:].strip()
+    values_str = values_part[6:].strip()  # удаляем "values"
 
     try:
         values = parse_insert_values(values_str)
@@ -118,6 +140,7 @@ def handle_insert(args: List[str]) -> str:
 
 @handle_db_errors
 def handle_select(args: List[str]) -> str:
+    """Обрабатывает команду select from."""
     if len(args) < 1:
         return "Ошибка: Неверный формат команды."
 
@@ -149,6 +172,7 @@ def handle_select(args: List[str]) -> str:
 
 @handle_db_errors
 def handle_update(args: List[str]) -> str:
+    """Обрабатывает команду update."""
     if len(args) < 4:
         return "Ошибка: Неверный формат команды."
 
@@ -190,6 +214,7 @@ def handle_update(args: List[str]) -> str:
 
 @handle_db_errors
 def handle_delete(args: List[str]) -> str:
+    """Обрабатывает команду delete from."""
     if len(args) < 3:
         return "Ошибка: Неверный формат команды."
 
@@ -215,6 +240,7 @@ def handle_delete(args: List[str]) -> str:
 
 @handle_db_errors
 def handle_info(args: List[str]) -> str:
+    """Обрабатывает команду info."""
     if len(args) != 1:
         return "Ошибка: Используйте: info <имя_таблицы>"
 
@@ -227,6 +253,7 @@ def handle_info(args: List[str]) -> str:
 
 @handle_db_errors
 def handle_create_table(args: List[str]) -> str:
+    """Обрабатывает команду create_table."""
     if len(args) < 2:
         return "Ошибка: Недостаточно аргументов."
 
@@ -248,6 +275,7 @@ def handle_create_table(args: List[str]) -> str:
 
 @handle_db_errors
 def handle_drop_table(args: List[str]) -> str:
+    """Обрабатывает команду drop_table."""
     if len(args) != 1:
         return "Ошибка: Неверное количество аргументов."
 
@@ -263,6 +291,7 @@ def handle_drop_table(args: List[str]) -> str:
 
 @handle_db_errors
 def run() -> None:
+    """Основной цикл выполнения программы."""
     print_welcome()
 
     while True:
@@ -287,7 +316,7 @@ def run() -> None:
                 print_help()
 
             elif command == "create_table":
-                result = handle_insert(args)
+                result = handle_create_table(args)
                 if result:
                     print(result)
 

@@ -1,3 +1,4 @@
+"""Парсеры для разбора условий WHERE и SET."""
 import shlex
 from typing import Any, Dict, Optional
 
@@ -6,6 +7,15 @@ from src.decorators import handle_db_errors
 
 @handle_db_errors
 def parse_where_condition(where_str: str) -> Optional[Dict[str, Any]]:
+    """
+    Парсит условие WHERE в формате "column = value".
+
+    Args:
+        where_str: Строка условия
+
+    Returns:
+        Словарь {column: value} или None если условие пустое
+    """
     if not where_str:
         return None
 
@@ -26,6 +36,15 @@ def parse_where_condition(where_str: str) -> Optional[Dict[str, Any]]:
 
 @handle_db_errors
 def parse_set_clause(set_str: str) -> Dict[str, Any]:
+    """
+    Парсит предложение SET в формате "column = value".
+
+    Args:
+        set_str: Строка SET
+
+    Returns:
+        Словарь {column: value}
+    """
     try:
         parts = shlex.split(set_str)
         if len(parts) != 3 or parts[1] != '=':
@@ -43,6 +62,15 @@ def parse_set_clause(set_str: str) -> Dict[str, Any]:
 
 @handle_db_errors
 def parse_value(value_str: str) -> Any:
+    """
+    Парсит строковое значение в соответствующий тип Python.
+
+    Args:
+        value_str: Строковое представление значения
+
+    Returns:
+        Значение соответствующего типа
+    """
     value_str = value_str.strip()
 
     if value_str.lower() == 'true':
@@ -64,6 +92,15 @@ def parse_value(value_str: str) -> Any:
 
 @handle_db_errors
 def parse_insert_values(values_str: str) -> list:
+    """
+    Парсит значения для INSERT в формате "(value1, value2, ...)".
+
+    Args:
+        values_str: Строка значений
+
+    Returns:
+        Список значений
+    """
     try:
         values_str = values_str.strip()
         if values_str.startswith('(') and values_str.endswith(')'):
