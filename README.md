@@ -42,7 +42,7 @@
 ```bash
 # Клонирование репозитория
 git clone <repository-url>
-cd project-2-naydanov-leonid
+cd primitive_bd
 
 # Установка зависимостей через Poetry
 make install
@@ -288,7 +288,7 @@ info users
 ## Структура проекта
 
 ```
-project-2-naydanov-leonid/
+primitive_bd/
 ├── pyproject.toml              # Конфигурация Poetry и зависимости
 ├── README.md                   # Документация
 ├── Makefile                    # Автоматизация задач
